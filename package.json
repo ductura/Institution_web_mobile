@@ -1,0 +1,17 @@
+{
+  "name": "@ductura/web-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ductura mobilni frontend za mobitele i tablete",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node dev-server.mjs",
+    "test": "npm run test:helpers && npm run test:functional",
+    "test:helpers": "node --test \"test/unit/*.test.js\"",
+    "test:functional": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
