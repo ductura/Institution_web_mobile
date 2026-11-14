@@ -70,12 +70,14 @@ let fullHeight = 0;
 screen.orientation?.addEventListener('change', () => { fullHeight = 0; });
 function onViewport() {
   const vv = window.visualViewport;
-  if (!vv) return;
-  fullHeight = Math.max(fullHeight, vv.height);
-  const open = isKeyboardOpen(vv.height, fullHeight);
-  document.body.classList.toggle('keyboard-open', open);
-  document.documentElement.style.setProperty('--vv-bottom', `${window.innerHeight - vv.height - vv.offsetTop}px`);
+  // WebKit ne javlja uvijek visualViewport 'resize', pa se gleda i window.innerHeight.
+  const visible = Math.min(vv?.height ?? Infinity, window.innerHeight);
+  fullHeight = Math.max(fullHeight, visible);
+  document.body.classList.toggle('keyboard-open', isKeyboardOpen(visible, fullHeight));
+  const offset = vv ? Math.max(window.innerHeight - vv.height - vv.offsetTop, 0) : 0;
+  document.documentElement.style.setProperty('--vv-bottom', `${offset}px`);
 }
 window.visualViewport?.addEventListener('resize', onViewport);
 window.visualViewport?.addEventListener('scroll', onViewport);
+window.addEventListener('resize', onViewport);
 onViewport();
