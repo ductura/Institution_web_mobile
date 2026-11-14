@@ -65,11 +65,13 @@ window.addEventListener('hashchange', router);
 router();
 
 // Zaslonska tipkovnica: traka za spremanje ostaje iznad tipkovnice.
-// Najveća viđena visina (bez tipkovnice); resetira se pri promjeni orijentacije.
+// Najveća viđena visina (bez tipkovnice) za trenutnu širinu. Tipkovnica mijenja samo visinu,
+// a okretanje uređaja mijenja širinu, pa se tada mjerenje počinje ispočetka.
 let fullHeight = 0;
-screen.orientation?.addEventListener('change', () => { fullHeight = 0; });
+let measuredWidth = 0;
 function onViewport() {
   const vv = window.visualViewport;
+  if (window.innerWidth !== measuredWidth) { measuredWidth = window.innerWidth; fullHeight = 0; }
   // WebKit ne javlja uvijek visualViewport 'resize', pa se gleda i window.innerHeight.
   const visible = Math.min(vv?.height ?? Infinity, window.innerHeight);
   fullHeight = Math.max(fullHeight, visible);

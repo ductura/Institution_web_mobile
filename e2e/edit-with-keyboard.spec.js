@@ -10,6 +10,8 @@ test('uređivanje i spremanje uz otvorenu tipkovnicu', async ({ page }) => {
   // Tipkovnica zauzima oko pola zaslona: vidljivi dio se smanjuje.
   const size = page.viewportSize();
   await page.setViewportSize({ width: size.width, height: Math.round(size.height * 0.5) });
+  // Pravi uređaj pri otvaranju tipkovnice šalje događaj 'resize'; emulirani WebKit ga ne šalje sam.
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
   await expect(page.locator('body')).toHaveClass(/keyboard-open/);
 
   const text = `Mobilna izmjena ${Date.now()}`;
