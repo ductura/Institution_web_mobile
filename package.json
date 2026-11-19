@@ -1,17 +1,31 @@
 {
   "name": "@ductura/web-mobile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Ductura mobilni frontend za mobitele i tablete",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "dev": "node dev-server.mjs",
-    "test": "npm run test:helpers && npm run test:functional",
-    "test:helpers": "node --test \"test/unit/*.test.js\"",
-    "test:functional": "playwright test"
+    "dev": "next dev -p 5174",
+    "start": "next start -p 5174",
+    "build": "next build",
+    "lint": "eslint .",
+    "test": "pnpm test:helpers && pnpm test:functional",
+    "test:helpers": "node --test \"tests/*.test.js\"",
+    "test:functional": "playwright test",
+    "fake-server": "node tests/e2e/lazni-server.mjs"
+  },
+  "dependencies": {
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@playwright/test": "1.63.0",
+    "eslint": "10.15.0",
+    "eslint-config-next": "16.4.6"
   }
 }
