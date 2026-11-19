@@ -34,6 +34,14 @@ test('stara poveznica /#/doc/… otvara stranicu dokumenta', async ({ page }) =>
   await expect(page.getByLabel('Naslov')).toHaveValue('Bilješke s predavanja');
 });
 
+test('stara poveznica otvorena dok je popis već prikazan', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Moji dokumenti' })).toBeVisible();
+  await page.evaluate(() => { window.location.hash = '#/doc/demo-2'; });
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/doc/demo-2');
+  await expect(page.getByLabel('Naslov')).toHaveValue('Bilješke s predavanja');
+});
+
 test('popis dokumenata vodi na dokument', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Moji dokumenti' })).toBeVisible();
