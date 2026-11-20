@@ -9,17 +9,23 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "next dev -p 5174",
+    "dev": "node src/lib/build-work-packages.mjs && next dev -p 5174",
     "start": "next start -p 5174",
-    "build": "next build",
+    "build": "node src/lib/build-work-packages.mjs && next build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node src/lib/build-work-packages.mjs && tsc --noEmit",
     "test": "pnpm test:helpers && pnpm test:functional",
     "test:helpers": "node --test \"tests/*.test.js\"",
     "test:functional": "playwright test",
     "fake-server": "node tests/e2e/lazni-server.mjs"
   },
   "dependencies": {
+    "@ductura/contracts": "https://github.com/ductura/Institution_server/releases/download/contracts-v2.9.1/ductura-contracts-2.9.1.tgz",
+    "@ductura/editor-core": "github:ductura/Institution_front_web_chrome#29f90e53328f4f416e5bd7c8569a7a315b9f51e0&path:packages/editor-core",
+    "@ductura/ui": "github:ductura/Institution_front_web_chrome#29f90e53328f4f416e5bd7c8569a7a315b9f51e0&path:packages/ui",
+    "@noble/curves": "2.4.0",
+    "@tiptap/core": "3.33.0",
+    "@tiptap/pm": "3.33.0",
     "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1"
@@ -30,6 +36,7 @@
     "@types/react": "^19.3.0",
     "eslint": "10.15.0",
     "eslint-config-next": "16.4.6",
+    "rolldown": "1.3.3",
     "typescript": "5.9.3"
   }
 }

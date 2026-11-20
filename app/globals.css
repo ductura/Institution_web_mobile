@@ -13,3 +13,19 @@ main { padding: 12px 16px 80px; }
   background: #fff; border-top: 1px solid #ddd;
 }
 .editor-bar button { margin-left: auto; min-height: 44px; padding: 8px 20px; font-size: 1rem; }
+
+.student-work { max-width: 780px; margin: 0 auto; padding-bottom: 60px; }
+.student-work h1 { margin: 8px 0 16px; line-height: 1.2; overflow-wrap: anywhere; }
+.work-list { padding: 0; list-style: none; }
+.work-list a { display: flex; align-items: center; min-height: 44px; padding: 8px 12px; color: inherit; background: #f3f2ee; overflow-wrap: anywhere; }
+.work-paper { background: #fcfbf8; border: 1px solid #cfccc4; border-radius: 8px; }
+.work-paper .tiptap { min-height: 46vh; padding: 12px 16px; overflow-wrap: anywhere; }
+.work-paper .tiptap:focus-visible { outline: 2px solid #806529; outline-offset: 2px; border-radius: 8px; }
+.work-paper .is-editor-empty:first-child::before { content: attr(data-placeholder); color: #625c52; pointer-events: none; float: left; height: 0; }
+.work-bar { flex-direction: column; align-items: stretch; gap: 4px; background: var(--raised); color: var(--ink); }
+.work-bar p { margin: 0; font-size: .875rem; }
+.work-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.work-actions button { margin-left: 0; }
+.work-result { margin-top: 16px; padding: 16px; overflow-wrap: anywhere; background: #f3f2ee; }
+.work-result dl, .work-result dd { margin: 0; }
+.work-result dt { margin-top: 8px; font-weight: 600; }

@@ -2,6 +2,7 @@
 // in-memory document API the old dev-server.mjs had, now under /api/v1.
 // Only invented data. It does not check the session; one fixed id answers 401.
 import { createServer } from "node:http";
+import { studentWorkRoute } from "./student-work-server.mjs";
 
 const PORT = Number(process.env.LAZNI_PORT ?? 4099);
 const docs = new Map([
@@ -17,6 +18,7 @@ const json = (res, status, body) => {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   if (url.pathname === "/__zdravlje") return json(res, 200, { ok: true });
+  if (await studentWorkRoute(req, res, url.pathname, json)) return;
   if (url.pathname === "/api/v1/documents" && req.method === "GET") return json(res, 200, [...docs.values()]);
   const m = url.pathname.match(/^\/api\/v1\/documents\/([\w-]+)$/);
   if (!m) return json(res, 404, { error: "nema" });
