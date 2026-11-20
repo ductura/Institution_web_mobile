@@ -64,7 +64,7 @@ async function citaj(putanja, kolacic) {
 /** @returns {Promise<Array<{id: string, title: string}> | "odjavljen" | "nedostupan">} */
 export async function dohvatiDokumente(kolacic) {
   const r = await citaj("/documents", kolacic);
-  if (typeof r === "string") return r === "nema" ? "nedostupan" : r;
+  if (typeof r === "string") return r === "odjavljen" ? "odjavljen" : "nedostupan";
   if (!Array.isArray(r)) return "nedostupan";
   return r.filter((d) => d && ispravanId(d.id) && tekst(d.title)).map(({ id, title }) => ({ id, title }));
 }
@@ -73,7 +73,7 @@ export async function dohvatiDokumente(kolacic) {
 export async function dohvatiDokument(id, kolacic) {
   if (!ispravanId(id)) return "nema";
   const r = await citaj(`/documents/${encodeURIComponent(id)}`, kolacic);
-  if (typeof r === "string") return r;
+  if (r === "odjavljen" || r === "nema" || r === "nedostupan") return r;
   return dokument(r) ? { id: r.id, title: r.title, content: r.content } : "nedostupan";
 }
 
