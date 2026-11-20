@@ -1,4 +1,5 @@
 import Link from "next/link";
+import "@ductura/ui/tokens.css";
 import Tipkovnica from "../src/components/Tipkovnica.jsx";
 import "./globals.css";
 
