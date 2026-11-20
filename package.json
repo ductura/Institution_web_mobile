@@ -23,6 +23,7 @@
     "@ductura/contracts": "https://github.com/ductura/Institution_server/releases/download/contracts-v2.9.1/ductura-contracts-2.9.1.tgz",
     "@ductura/editor-core": "github:ductura/Institution_front_web_chrome#29f90e53328f4f416e5bd7c8569a7a315b9f51e0&path:packages/editor-core",
     "@ductura/ui": "github:ductura/Institution_front_web_chrome#29f90e53328f4f416e5bd7c8569a7a315b9f51e0&path:packages/ui",
+    "@noble/curves": "2.4.0",
     "@tiptap/core": "3.33.0",
     "@tiptap/pm": "3.33.0",
     "next": "16.4.6",

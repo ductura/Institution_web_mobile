@@ -5,6 +5,7 @@ import {
   canonicalToTiptapV3, verifyWorkOpening, verifySignedEvidenceReceiptV2,
 } from "../../node_modules/.ductura-mobile/editor-core.mjs";
 import { api } from "./putanje.js";
+import { verifyEd25519 } from "./receipt-signature.js";
 
 const SHA256 = /^[\da-f]{64}$/;
 function b64(bytes) {
@@ -16,6 +17,7 @@ function b64(bytes) {
 }
 const fromB64 = (text) => Uint8Array.from(atob(text), (character) => character.charCodeAt(0));
 const fromB64Url = (text) => fromB64(text.replaceAll("-", "+").replaceAll("_", "/"));
+const hex = (bytes) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 
 async function post(path, body) {
   const response = await fetch(api(`/v1/${path}`), {
@@ -66,12 +68,13 @@ export function createWorkSync(opened, report) {
   const sessionId = crypto.randomUUID();
 
   async function drain() {
-    while (!disposed && (dirty || pending)) {
+    while (!disposed && !stopped && (dirty || pending)) {
       if (!pending) {
         dirty = false;
         recorder.close();
         const built = await recorder.takeSegment({ documentId, sessionId, evidenceProfileId,
           segmentId: crypto.randomUUID(), sequenceFrom: lastSequence + 1, predecessorSegmentHash: head });
+        if (disposed || stopped) return false;
         if (!built) continue;
         pending = { built, clientTransactionId: crypto.randomUUID() };
       }
@@ -99,7 +102,7 @@ export function createWorkSync(opened, report) {
       // A segment can hold only part of the changes which have been recorded.
       dirty = true;
     }
-    if (disposed) return false;
+    if (disposed || stopped) return false;
     report("SYNCED");
     return true;
   }
@@ -112,7 +115,7 @@ export function createWorkSync(opened, report) {
     report("SYNCING");
     running = drain().catch(() => {
       if (!recorder.intact) stopped = true;
-      report("ERROR");
+      if (!disposed) report(stopped ? "RECOVERY_REQUIRED" : "ERROR");
       return false;
     }).finally(() => { running = null; });
     return running;
@@ -121,6 +124,7 @@ export function createWorkSync(opened, report) {
   return {
     flush,
     hasChanges: () => dirty || pending !== null || running !== null || stopped,
+    isStopped: () => stopped,
     submission: () => ({ documentId, revision }),
     currentHead: () => head,
     extensions: [StorableInput, observer.extension],
@@ -136,7 +140,7 @@ export function createWorkSync(opened, report) {
         timer = setTimeout(flush, 650);
       } catch {
         stopped = true;
-        report("ERROR");
+        report("RECOVERY_REQUIRED");
       }
     },
   };
@@ -144,7 +148,9 @@ export function createWorkSync(opened, report) {
 
 export async function submitStudentWork(input, assignmentId, head, opened) {
   const { http, body } = await post("submission", input);
-  if (http !== 200 || body?.status !== "submitted") return { rejected: http >= 400 && http < 500 };
+  if (http !== 200 || body?.status !== "submitted") {
+    return { rejected: http >= 400 && http < 500 && body?.status !== "already_requested" };
+  }
   const { payload, signature, payloadDigestSha256 } = body.receipt ?? {};
   if (payload?.receiptSchema !== "ductus-submission-receipt-v2" || payload.assignmentId !== assignmentId.toLowerCase() ||
       payload.documentId !== input.documentId || payload.revision !== input.revision ||
@@ -158,14 +164,12 @@ export async function submitStudentWork(input, assignmentId, head, opened) {
   if (!key) return { rejected: false };
   const encoder = new TextEncoder();
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(canonicalJson(payload))));
-  if (Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("") !== payloadDigestSha256) {
-    return { rejected: false };
-  }
+  if (hex(digest) !== payloadDigestSha256) return { rejected: false };
   const prefix = encoder.encode(`${payload.receiptSchema}\n`);
-  const publicKey = await crypto.subtle.importKey("spki",
-    fromB64Url(key.keyBase64Url), "Ed25519", false, ["verify"]);
-  const valid = await crypto.subtle.verify("Ed25519", publicKey,
-    fromB64Url(signature.signatureBase64Url),
+  const spki = fromB64Url(key.keyBase64Url);
+  // RFC 8410: the DER header of an Ed25519 SubjectPublicKeyInfo.
+  if (spki.length !== 44 || hex(spki.subarray(0, 12)) !== "302a300506032b6570032100") return { rejected: false };
+  const valid = verifyEd25519(spki.subarray(12), fromB64Url(signature.signatureBase64Url),
     new Uint8Array([...prefix, ...digest]));
   return valid ? { receipt: payload } : { rejected: false };
 }

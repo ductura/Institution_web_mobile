@@ -45,7 +45,10 @@ function WorkEditor({ opened, assignmentId }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const sync = createWorkSync(opened, setSaveState);
+    const sync = createWorkSync(opened, (state) => {
+      setSaveState(state);
+      if (state === "RECOVERY_REQUIRED" || state === "CONFLICT") session.current?.editor.setEditable(false);
+    });
     const document = editorContent(opened.work.document, rad.pocni);
     const editor = new Editor({
       element: surface.current,
@@ -102,12 +105,13 @@ function WorkEditor({ opened, assignmentId }) {
       setError(rad.greskaPredaje);
     } finally {
       setLocked(keepLocked);
-      if (!keepLocked) editor.setEditable(true);
+      if (!keepLocked && !sync.isStopped()) editor.setEditable(true);
       submitting.current = false;
       setBusy(false);
     }
   }
 
+  const stopped = saveState === "CONFLICT" || saveState === "RECOVERY_REQUIRED";
   return (
     <>
       <div className="work-paper" ref={surface} />
@@ -123,12 +127,15 @@ function WorkEditor({ opened, assignmentId }) {
             {saveState && <SaveState state={saveState} />}
             {saveState === "CONFLICT" && <p>{rad.izmijenjen}</p>}
             {saveState === "ERROR" && <p>{rad.greskaSpremanja}</p>}
+            {saveState === "RECOVERY_REQUIRED" && <p>{rad.oporavak}</p>}
           </div>
           <div className="work-actions">
             <Button tone="quiet" onClick={() => { void session.current?.sync.flush(); }}
-              disabled={saveState === "CONFLICT" || locked}>{rad.spremi}</Button>
+              disabled={stopped || locked}>{rad.spremi}</Button>
             <Button onClick={() => { setError(""); setDialog(true); }}
-              disabled={saveState === "CONFLICT" || (saveState === null && opened.work.revision === 0)}>{rad.predaj}</Button>
+              disabled={stopped || (saveState === null && opened.work.revision === 0)}>
+              {locked ? rad.provjeriPredaju : rad.predaj}
+            </Button>
           </div>
         </footer>
       )}

@@ -1,13 +1,9 @@
 import { createHash, generateKeyPairSync, randomUUID, sign } from "node:crypto";
 import { canonicalJson, validateInput } from "@ductura/contracts";
 
-export const assignmentId = "d0010000-0000-4000-8000-000000000001";
-export const resetWorkPath = "/__rad/ponisti";
-const documentId = "demo-studentski-rad";
 const evidenceDomainId = "d0020000-0000-4000-8000-000000000002";
 const principalId = "d0030000-0000-4000-8000-000000000003";
 const profile = "demo-pisanje";
-const draft = "Seminarski rad o gradskim vrtovima";
 const { publicKey, privateKey } = generateKeyPairSync("ed25519");
 const key = {
   algorithm: "Ed25519", keyId: "demo-potpis", keyVersion: "1", encoding: "spki-der", evidenceDomainId,
@@ -19,9 +15,7 @@ const zero = Buffer.from(canonicalJson({
   schemaVersion: 2, nodes: [{ id: "00000000-0000-4000-8000-000000000000", type: "paragraph", children: [] }], sources: [],
 }));
 const revisionZeroHash = sha256(zero);
-const initial = () => ({ revision: 0, head: null, sequence: 0, document: zero,
-  submissions: null, lastReceipt: null, commits: new Map() });
-let work = initial();
+const works = new Map();
 
 function signed(payload) {
   const digest = createHash("sha256").update(canonicalJson(payload)).digest();
@@ -33,13 +27,13 @@ function signed(payload) {
   };
 }
 
-function commit(input, json, res) {
+function commit(work, input, json, res) {
+  const { documentId } = work;
   const existing = work.commits.get(input.clientTransactionId);
   if (existing) {
     if (existing.input !== canonicalJson(input)) return json(res, 409, { status: "txid_reused" });
     return json(res, 200, { status: "duplicate", revision: existing.revision, receipt: existing.receipt });
   }
-  if (input.documentId !== documentId) return json(res, 404, { status: "not_found" });
   if (work.submissions) return json(res, 409, { status: "not_accepting" });
   if (work.revision !== input.baseRevision) return json(res, 409, { status: "stale_base", currentRevision: work.revision });
   const packed = Buffer.from(input.segments[0], "base64");
@@ -62,14 +56,14 @@ function commit(input, json, res) {
     acceptedAt: new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString(),
     revision, clientTransactionId: input.clientTransactionId, evidenceDomainId, principalId,
   }) };
-  work = { ...work, revision, head: segmentHash, sequence: segment.sequenceTo, document,
-    lastReceipt: receipt.signedReceipt.payload.receiptId };
+  Object.assign(work, { revision, head: segmentHash, sequence: segment.sequenceTo, document,
+    lastReceipt: receipt.signedReceipt.payload.receiptId });
   work.commits.set(input.clientTransactionId, { input: canonicalJson(input), revision, receipt });
   return json(res, 200, { status: "committed", revision, receipt });
 }
 
-function submit(input, json, res) {
-  if (input.documentId !== documentId) return json(res, 404, { status: "not_found" });
+function submit(work, input, json, res) {
+  const { assignmentId, documentId } = work;
   if (input.revision !== work.revision) return json(res, 409, { status: "stale_revision", currentRevision: work.revision });
   if (work.revision === 0) return json(res, 409, { status: "blocked", reason: "no_evidence" });
   const now = new Date().toISOString().replace("Z", "000Z");
@@ -83,14 +77,20 @@ function submit(input, json, res) {
 }
 
 export async function studentWorkRoute(req, res, path, json) {
-  if (path === resetWorkPath && req.method === "POST") {
-    work = initial();
-    json(res, 200, { ok: true });
+  if (path === "/__rad/otvori" && req.method === "POST") {
+    const assignmentId = randomUUID();
+    const documentId = `demo-${assignmentId}`;
+    const title = `Gradski vrtovi ${works.size + 1}`;
+    works.set(documentId, { assignmentId, documentId, title, revision: 0, head: null, sequence: 0, document: zero,
+      submissions: null, lastReceipt: null, commits: new Map() });
+    json(res, 200, { documentId, title });
     return true;
   }
   if (path === "/api/v1/student/assignments" && req.method === "GET") {
-    json(res, 200, { courses: [{ id: "d0040000-0000-4000-8000-000000000004", name: "Izmišljeni kolegij",
-      assignments: [{ id: assignmentId, title: draft, dueAt: "2030-01-01T00:00:00.000Z", noticeFirst: false }] }] });
+    const assignments = [...works.values()].map(({ assignmentId, title }) => ({
+      id: assignmentId, title, dueAt: "2030-01-01T00:00:00.000Z", noticeFirst: false,
+    }));
+    json(res, 200, { courses: [{ id: "d0040000-0000-4000-8000-000000000004", name: "Izmišljeni kolegij", assignments }] });
     return true;
   }
   const operations = {
@@ -105,14 +105,17 @@ export async function studentWorkRoute(req, res, path, json) {
     const body = JSON.parse(raw);
     if (!req.headers.origin || req.headers["ductus-protocol"] !== "1" || !validateInput(operations[path], "body", body)) {
       json(res, 422, { status: "invalid" });
-    } else if (path.endsWith("/open")) {
-      if (body.assignmentId !== assignmentId) json(res, 404, { status: "not_found" });
-      else json(res, 200, { status: "opened", documentId, evidenceProfileId: profile, revisionZeroHash, schemaVersion: 2,
+      return true;
+    }
+    const work = works.get(path.endsWith("/open") ? `demo-${body.assignmentId}` : body.documentId);
+    if (!work) json(res, 404, { status: "not_found" });
+    else if (path.endsWith("/open")) {
+      json(res, 200, { status: "opened", documentId: work.documentId, evidenceProfileId: profile, revisionZeroHash, schemaVersion: 2,
         currentRevision: work.revision, receiptKeys: [key], documentHash: sha256(work.document),
         headSegmentHash: work.head, lastSequenceTo: work.sequence, document: work.document.toString("base64"),
         submitted: work.submissions !== null });
-    } else if (path.endsWith("/commit")) commit(body, json, res);
-    else submit(body, json, res);
+    } else if (path.endsWith("/commit")) commit(work, body, json, res);
+    else submit(work, body, json, res);
   } catch {
     json(res, 400, { status: "bad_request" });
   }

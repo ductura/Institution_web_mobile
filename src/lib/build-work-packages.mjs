@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const output = resolve("node_modules/.ductura-mobile");
+const receiptSignature = fileURLToPath(new URL("./receipt-signature.js", import.meta.url));
 
 // The two private source packages ship TypeScript. Next gets JS and handles
 // the original UI CSS modules. React and ProseMirror stay shared with the app.
@@ -12,7 +13,17 @@ async function bundleSource(name, exports) {
   const bundle = await rolldown({
     input: entry,
     platform: "browser",
-    transform: { jsx: "react-jsx" },
+    transform: {
+      jsx: "react-jsx",
+      ...(name === "editor-core" && {
+        define: {
+          "globalThis.crypto.subtle.importKey": "importReceiptKey",
+          "globalThis.crypto.subtle.verify": "verifyReceiptSignature",
+        },
+        inject: { importReceiptKey: [receiptSignature, "importReceiptKey"],
+          verifyReceiptSignature: [receiptSignature, "verifyReceiptSignature"] },
+      }),
+    },
     external: ["react", "react/jsx-runtime", "@tiptap/core", /^@tiptap\/pm\//],
     onLog(level, log, handler) {
       if (log.code !== "MODULE_LEVEL_DIRECTIVE") handler(level, log);
