@@ -7,14 +7,15 @@ export function debounce(fn, ms) {
   return wrapped;
 }
 
-/** '#/doc/abc' -> { view: 'doc', id: 'abc' }; sve ostalo -> popis */
+/** Stara poveznica '#/doc/abc' -> { view: 'doc', id: 'abc' }; sve ostalo -> popis */
 export function parseRoute(hash = '') {
   const m = String(hash).match(/^#\/doc\/([\w-]+)$/);
   return m ? { view: 'doc', id: m[1] } : { view: 'list' };
 }
 
+/** Putanja stranice dokumenta (bez osnovne putanje; nju dodaje Next). */
 export function docHref(id) {
-  return `#/doc/${encodeURIComponent(id)}`;
+  return `/doc/${encodeURIComponent(id)}`;
 }
 
 export function wordCount(text = '') {
@@ -22,7 +23,14 @@ export function wordCount(text = '') {
   return words.length;
 }
 
-const LABELS = { idle: '', dirty: 'Nespremljene izmjene', saving: 'Spremanje…', saved: 'Spremljeno', error: 'Greška pri spremanju' };
+// Rječnik sučelja (Ductus docs/PRODUCT.md §5): „spremljeno” uvijek kaže gdje.
+const LABELS = {
+  idle: '',
+  dirty: 'Izmjene još nisu na poslužitelju',
+  saving: 'Spremanje na poslužitelj…',
+  saved: 'Spremljeno na poslužitelju',
+  error: 'Spremanje na poslužitelj nije uspjelo',
+};
 export function saveStatusLabel(state) {
   return LABELS[state] ?? '';
 }
