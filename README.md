@@ -35,6 +35,10 @@ Pokriva je `tests/e2e/edit-with-keyboard.spec.js` na emuliranom Androidu (Pixel 
 nad produkcijskim buildom i lažnim Institution_serverom (`tests/e2e/lazni-server.mjs`, izmišljeni podaci).
 Tipkovnica se oponaša smanjenjem vidljivog dijela zaslona; pravi uređaji provjeravaju se ručno prije izdanja.
 
+## Provjere (CI)
+
+`pnpm lint`, `pnpm typecheck` (tsc, checkJs), `pnpm test:helpers`, `pnpm build`, `pnpm test:functional`; CI ih vrti na PR-ovima i pushu na `main` i `migracija/nextjs`.
+
 ## Pokretanje
 
 ```bash

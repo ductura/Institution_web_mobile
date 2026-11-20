@@ -11,7 +11,8 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   const { id } = await params;
   const m = await procitajMutaciju(request);
-  if (m.odbijeno) return m.odbijeno;
+  if ("odbijeno" in m) return m.odbijeno;
+  /** @type {{id?: unknown, title?: unknown, content?: unknown}} */
   const t = m.tijelo && typeof m.tijelo === "object" ? m.tijelo : {};
   if (typeof t.title !== "string" || typeof t.content !== "string" || (t.id !== undefined && t.id !== id)) {
     return odgovor({ greska: "neispravan_unos" }, 400);
