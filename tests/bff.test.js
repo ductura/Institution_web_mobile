@@ -2,6 +2,7 @@ import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as popis from '../app/api/documents/route.js';
 import * as dokument from '../app/api/documents/[id]/route.js';
+import { POST as rad } from '../app/api/v1/[...work]/route.js';
 import { izvuciKolacic } from '../src/server/institution-server.js';
 
 let pozivi;
@@ -94,4 +95,24 @@ test('izvuciKolacic', () => {
   assert.equal(izvuciKolacic('ductus_session=abc'), null);
   assert.equal(izvuciKolacic('__Host-ductus_session=a b'), null);
   assert.equal(izvuciKolacic(undefined), null);
+});
+
+test('predaja prosljeđuje samo identitet dokumenta i reviziju kroz zajednički ugovor', async () => {
+  const input = { documentId: 'demo-rad', revision: 2 };
+  const init = (body, origin = 'http://127.0.0.1:5174') => ({
+    ...put(body, { origin }), method: 'POST',
+  });
+  const ctx = { params: Promise.resolve({ work: ['submission'] }) };
+  assert.equal((await rad(zahtjev('/v1/submission', init(input, 'https://drugi.test')), ctx)).status, 403);
+  assert.equal((await rad(zahtjev('/v1/submission', init({ ...input, content: 'višak' })), ctx)).status, 422);
+  assert.equal(pozivi.length, 0);
+  odgovori.push(json({ status: 'stale_revision', currentRevision: 3 }, 409));
+  const res = await rad(zahtjev('/v1/submission', init(input)), ctx);
+  assert.equal(res.status, 409);
+  assert.deepEqual(await res.json(), { status: 'stale_revision', currentRevision: 3 });
+  assert.equal(pozivi[0].url, 'http://server.test:4000/api/v1/submission');
+  assert.equal(pozivi[0].headers['ductus-protocol'], '1');
+  assert.equal(pozivi[0].headers.origin, 'http://127.0.0.1:5174');
+  assert.equal(pozivi[0].headers.cookie, KOLACIC);
+  assert.deepEqual(JSON.parse(pozivi[0].body), input);
 });

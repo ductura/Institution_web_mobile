@@ -23,14 +23,14 @@ export const greska = (stanje) =>
  * the same origin.
  * @returns {Promise<{tijelo: unknown} | {odbijeno: Response}>}
  */
-export async function procitajMutaciju(request) {
+export async function procitajMutaciju(request, maxBytes = MAX_TIJELO) {
   const site = request.headers.get("sec-fetch-site");
   if (site && site !== "same-origin") return { odbijeno: odgovor({ greska: "zabranjeno" }, 403) };
   if (!/^application\/json\s*(;|$)/i.test(request.headers.get("content-type") ?? "")) {
     return { odbijeno: odgovor({ greska: "ocekuje_se_json" }, 415) };
   }
   const tekst = await request.text();
-  if (Buffer.byteLength(tekst, "utf8") > MAX_TIJELO) return { odbijeno: odgovor({ greska: "prevelik_zahtjev" }, 413) };
+  if (Buffer.byteLength(tekst, "utf8") > maxBytes) return { odbijeno: odgovor({ greska: "prevelik_zahtjev" }, 413) };
   try {
     return { tijelo: JSON.parse(tekst) };
   } catch {

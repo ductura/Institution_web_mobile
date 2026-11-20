@@ -23,13 +23,15 @@ export function izvuciKolacic(cookieHeader) {
 
 /**
  * @param {string} putanja path under /api/v1, e.g. "/documents"
- * @param {{method?: string, tijelo?: unknown, kolacic?: string | null}} [opcije]
+ * @param {{method?: string, tijelo?: unknown, kolacic?: string | null, origin?: string, protocol?: string}} [opcije]
  * @returns {Promise<Response | null>} null when the server cannot be reached in time.
  */
-export async function pozoviServer(putanja, { method = "GET", tijelo, kolacic } = {}) {
+export async function pozoviServer(putanja, { method = "GET", tijelo, kolacic, origin, protocol } = {}) {
   const headers = { accept: "application/json" };
   if (kolacic) headers.cookie = `${KOLACIC}=${kolacic}`;
   if (tijelo !== undefined) headers["content-type"] = "application/json";
+  if (origin) headers.origin = origin;
+  if (protocol) headers["ductus-protocol"] = protocol;
   try {
     return await fetch(`${serverUrl()}/api/v1${putanja}`, {
       method,
