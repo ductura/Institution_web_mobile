@@ -59,13 +59,19 @@ test("samo tipkovnicom otvara obrazac, vraća se s prijave i šalje zapis na 360
     const origin = log.match(/Local:\s+(http:\/\/127\.0\.0\.1:\d+)/)[1];
     await expect.poll(async () => (await fetch(origin)).status, { timeout: 10_000 }).toBe(200);
 
+    let prijavljen = false;
     await page.route(`**${LOGIN}?*`, async (route) => {
       const povratak = new URL(route.request().url()).searchParams.get("returnTo");
       expect(povratak).toBe(PUTANJA);
-      await route.fulfill({
-        status: 302,
-        headers: { location: povratak, "set-cookie": `${SESIJA}; Path=/; HttpOnly; Secure; SameSite=Lax` },
-      });
+      prijavljen = true;
+      await route.fulfill({ status: 302, headers: { location: povratak } });
+    });
+    await page.route("**/api/prijavi-problem", async (route) => {
+      if (!prijavljen) return route.continue();
+      // Simulate the cookie issued by AAI on HTTPS. WebKit drops Secure
+      // cookies on this HTTP fixture, so attach it to the real BFF request.
+      const response = await route.fetch({ headers: { ...route.request().headers(), cookie: SESIJA } });
+      await route.fulfill({ response });
     });
 
     await page.goto(origin);
