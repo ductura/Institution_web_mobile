@@ -4,7 +4,8 @@ test("student na 360 px otvara dnevnik sa stranice rada", async ({ page, context
   const demo = await request.post("http://127.0.0.1:4099/__rad/otvori");
   expect(demo.ok()).toBe(true);
   const { title, documentId } = await demo.json();
-  await context.addCookies([{ name: "__Host-ductus_session", value: "demo-pristup", url: baseURL, secure: true }]);
+  const cookie = { name: "__Host-ductus_session", domain: new URL(baseURL).hostname, path: "/", secure: true };
+  await context.addCookies([{ ...cookie, value: "demo-pristup" }]);
   await page.setViewportSize({ width: 360, height: 780 });
   await page.goto("/");
   await page.getByRole("link", { name: title, exact: true }).tap();
@@ -27,7 +28,7 @@ test("student na 360 px otvara dnevnik sa stranice rada", async ({ page, context
 
   await page.goto("/pristup/demo-nepoznat");
   await expect(page.getByRole("alert")).toHaveText("Rad nije pronađen");
-  await context.addCookies([{ name: "__Host-ductus_session", value: "demo-zabranjeno", url: baseURL, secure: true }]);
+  await context.addCookies([{ ...cookie, value: "demo-zabranjeno" }]);
   await page.goto(`/pristup/${documentId}`);
   await expect(page.getByRole("alert")).toHaveText("Rad nije pronađen");
 
