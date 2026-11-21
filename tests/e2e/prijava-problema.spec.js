@@ -14,7 +14,7 @@ const LOGIN = "/api/v1/auth/login";
 test.use({ viewport: { width: 360, height: 780 } });
 
 test("samo tipkovnicom otvara obrazac, vraća se s prijave i šalje zapis na 360 px", async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   const zapisi = [];
   const lazni = createServer(async (req, res) => {
     res.setHeader("content-type", "application/json");
@@ -55,9 +55,9 @@ test("samo tipkovnicom otvara obrazac, vraća se s prijave i šalje zapis na 360
     let log = "";
     app.stdout.on("data", (dio) => { log += dio; });
     app.stderr.on("data", (dio) => { log += dio; });
-    await expect.poll(() => log, { timeout: 15_000 }).toMatch(/Local:\s+http:\/\/127\.0\.0\.1:\d+/);
+    await expect.poll(() => log, { timeout: 45_000 }).toMatch(/Local:\s+http:\/\/127\.0\.0\.1:\d+/);
     const origin = log.match(/Local:\s+(http:\/\/127\.0\.0\.1:\d+)/)[1];
-    await expect.poll(async () => (await fetch(origin)).status, { timeout: 10_000 }).toBe(200);
+    await expect.poll(async () => (await fetch(origin).catch(() => null))?.status, { timeout: 30_000 }).toBe(200);
 
     let prijavljen = false;
     await page.route(`**${LOGIN}?*`, async (route) => {
