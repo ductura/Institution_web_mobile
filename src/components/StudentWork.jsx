@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/core";
 import { Button, Dialog, SaveState } from "../../node_modules/.ductura-mobile/ui.mjs";
-import { rad } from "../lib/messages.hr.js";
+import { dnevnikPristupa, rad } from "../lib/messages.hr.js";
+import { BASE_PATH } from "../lib/putanje.js";
 import { createWorkSync, editorContent, openStudentWork, submitStudentWork } from "../lib/work-evidence.js";
 import Stanje from "./Stanje.jsx";
 
@@ -114,6 +115,7 @@ function WorkEditor({ opened, assignmentId }) {
   const stopped = saveState === "CONFLICT" || saveState === "RECOVERY_REQUIRED";
   return (
     <>
+      <p><a href={`${BASE_PATH}/pristup/${encodeURIComponent(opened.work.documentId)}`}>{dnevnikPristupa.naslov}</a></p>
       <div className="work-paper" ref={surface} />
       {submitted ? (
         <div className="work-result" role="status">
