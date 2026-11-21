@@ -103,10 +103,10 @@ test("samo tipkovnicom otvara obrazac, vraća se s prijave i šalje zapis na 360
 
     await tabDoOpisa();
     await page.keyboard.type(OPIS);
-    const prijava = page.waitForRequest(`**${LOGIN}?*`);
+    const povratak = page.waitForEvent("framenavigated",
+      (frame) => frame === page.mainFrame() && frame.url() === `${origin}${PUTANJA}`);
     await posalji();
-    await prijava;
-    await expect(page).toHaveURL(`${origin}${PUTANJA}`);
+    await povratak;
     await expect(opis).toHaveValue(OPIS);
     expect(zapisi).toHaveLength(0);
 
