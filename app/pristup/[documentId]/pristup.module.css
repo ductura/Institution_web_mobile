@@ -1,0 +1,53 @@
+.dnevnik {
+  max-width: 40rem;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+
+.dnevnik h1 {
+  margin-block: 8px 16px;
+  line-height: 1.2;
+}
+
+.dnevnik h2 {
+  margin-block: 24px 8px;
+  font-size: 1rem;
+}
+
+.dnevnik a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+}
+
+.zapisi {
+  margin: 0;
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.zapis {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border-block-start: 1px solid #cfccc4;
+  background: #fcfbf8;
+}
+
+.zapis time {
+  font-variant-numeric: tabular-nums;
+}
+
+.zapis span {
+  display: block;
+  font-size: 0.875rem;
+}
+
+.stranice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-block-start: 12px;
+}

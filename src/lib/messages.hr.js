@@ -24,3 +24,30 @@ export const rad = {
   revizija: "Predana revizija",
   otisak: "Otisak predanog rada",
 };
+
+export const dnevnikPristupa = {
+  naslov: "Tko je vidio moj rad",
+  opis: "Vrijeme otvaranja prikazano je u petominutnim intervalima po zagrebačkom vremenu.",
+  prazno: "Tvoj rad još nitko nije otvorio.",
+  nemaStarijih: "Nema starijih otvaranja.",
+  nijePronaden: "Rad nije pronađen",
+  nedostupan: "Dnevnik pristupa trenutačno nije dostupan. Pokušaj ponovno.",
+  odjavljen: "Za prikaz dnevnika pristupa prijavi se.",
+  prijava: "Prijava preko AAI@EduHr",
+  stariji: "Prikaži starija otvaranja",
+  najnoviji: "Prikaži najnovija otvaranja",
+  uloge: {
+    teacher: "Nastavnik kolegija",
+    mentor: "Mentor",
+    seminar_teacher: "Nastavnik seminarske grupe",
+    unknown: "Druga uloga",
+  },
+  prikazi: {
+    live_view: "Rad uživo",
+    process_summary: "Sažetak procesa",
+    fast_path: "Brz put",
+    replay: "Reprodukcija",
+    submitted_text: "Predani tekst",
+    unknown: "Drugi prikaz",
+  },
+};
