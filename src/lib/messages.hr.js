@@ -25,6 +25,23 @@ export const rad = {
   otisak: "Otisak predanog rada",
 };
 
+export const prijavaProblema = {
+  naslov: "Prijavi problem",
+  kategorija: "Vrsta problema",
+  tehnicki: "Tehnički problem",
+  racun: "Prijava ili račun",
+  kolegij: "Kolegij ili zadatak",
+  opis: "Opis problema",
+  uputa: "Opiši što se dogodilo u najviše 1000 znakova. Izostavi osobne podatke i sadržaj rada.",
+  posalji: "Pošalji prijavu",
+  saljem: "Šaljem prijavu…",
+  potvrda: (oznaka) => `Prijava je zaprimljena. Oznaka prijave je ${oznaka}.`,
+  neispravanOpis: "Provjeri opis problema i pokušaj ponovno.",
+  previsePrijava: "Dosegnut je broj prijava za ovaj sat. Pokušaj kasnije.",
+  nemaPohrane: "Nacrt se ne može spremiti u ovoj kartici. Kopiraj opis prije odlaska na prijavu.",
+  greska: "Slanje prijave nije potvrđeno. Pokušaj ponovno.",
+};
+
 export const dnevnikPristupa = {
   naslov: "Tko je vidio moj rad",
   opis: "Vrijeme otvaranja prikazano je u petominutnim intervalima po zagrebačkom vremenu.",

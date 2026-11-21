@@ -9,13 +9,14 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "node src/lib/build-work-packages.mjs && next dev -p 5174",
+    "build:packages": "node src/lib/build-work-packages.mjs && node app/prijavi-problem/build-polja.mjs",
+    "dev": "pnpm build:packages && next dev -p 5174",
     "start": "next start -p 5174",
-    "build": "node src/lib/build-work-packages.mjs && next build",
+    "build": "pnpm build:packages && next build",
     "lint": "eslint .",
-    "typecheck": "node src/lib/build-work-packages.mjs && tsc --noEmit",
+    "typecheck": "pnpm build:packages && tsc --noEmit",
     "test": "pnpm test:helpers && pnpm test:functional",
-    "test:helpers": "node --test tests/bff.test.js tests/doc.test.js && vitest run --dir tests --exclude \"**/e2e/**\" --exclude \"**/{bff,doc}.test.js\"",
+    "test:helpers": "pnpm build:packages && node --test tests/bff.test.js tests/doc.test.js && vitest run --config app/prijavi-problem/vitest.config.mjs --dir tests --exclude \"**/e2e/**\" --exclude \"**/{bff,doc}.test.js\"",
     "test:functional": "playwright test",
     "fake-server": "node tests/e2e/lazni-server.mjs"
   },
@@ -36,6 +37,7 @@
     "@types/react": "^19.3.0",
     "eslint": "10.15.0",
     "eslint-config-next": "16.4.6",
+    "jsdom": "26.1.0",
     "rolldown": "1.3.3",
     "typescript": "5.9.3",
     "vitest": "5.1.1"

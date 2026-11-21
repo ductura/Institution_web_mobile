@@ -1,0 +1,30 @@
+.stranica {
+  max-width: 34rem;
+  margin-inline: auto;
+  padding: 1rem;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+}
+
+.obrazac {
+  display: grid;
+  gap: 1rem;
+}
+
+.obrazac button {
+  justify-self: start;
+  min-height: 44px;
+}
+
+.podnozje {
+  padding: 0 16px calc(6rem + env(safe-area-inset-bottom));
+}
+
+.podnozje a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+}
