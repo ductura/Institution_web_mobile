@@ -1,6 +1,8 @@
 import Link from "next/link";
 import "@ductura/ui/tokens.css";
 import Tipkovnica from "../src/components/Tipkovnica.jsx";
+import { poruke } from "../src/lib/prijava-problema.hr.js";
+import styles from "./prijavi-problem/prijava-problema.module.css";
 import "./globals.css";
 
 export const metadata = {
@@ -27,6 +29,9 @@ export default function RootLayout({ children }) {
           <span id="variant">Mobilno</span>
         </header>
         <main id="view">{children}</main>
+        <footer className={styles.podnozje}>
+          <Link href="/prijavi-problem">{poruke.naslov}</Link>
+        </footer>
         <Tipkovnica />
       </body>
     </html>
