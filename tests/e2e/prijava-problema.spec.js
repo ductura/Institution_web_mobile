@@ -64,7 +64,11 @@ test("samo tipkovnicom otvara obrazac, vraća se s prijave i šalje zapis na 360
       const povratak = new URL(route.request().url()).searchParams.get("returnTo");
       expect(povratak).toBe(PUTANJA);
       prijavljen = true;
-      await route.fulfill({ status: 302, headers: { location: povratak } });
+      // WebKit cannot fulfill an intercepted navigation with a 3xx response.
+      await route.fulfill({
+        contentType: "text/html",
+        body: `<script>location.replace(${JSON.stringify(PUTANJA)})</script>`,
+      });
     });
     await page.route("**/api/prijavi-problem", async (route) => {
       if (!prijavljen) return route.continue();
