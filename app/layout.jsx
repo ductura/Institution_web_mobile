@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
         </header>
         <main id="view">{children}</main>
         <footer className={styles.podnozje}>
-          <Link href="/prijavi-problem">{poruke.naslov}</Link>
+          <Link href="/prijavi-problem" tabIndex={0}>{poruke.naslov}</Link>
         </footer>
         <Tipkovnica />
       </body>
