@@ -83,7 +83,7 @@ export async function studentWorkRoute(req, res, path, json) {
     const title = `Gradski vrtovi ${works.size + 1}`;
     works.set(documentId, { assignmentId, documentId, title, revision: 0, head: null, sequence: 0, document: zero,
       submissions: null, lastReceipt: null, commits: new Map() });
-    json(res, 200, { documentId, title });
+    json(res, 200, { assignmentId, documentId, title });
     return true;
   }
   if (path === "/api/v1/student/assignments" && req.method === "GET") {

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("student na 360 px otvara dnevnik sa stranice rada", async ({ page, request }) => {
   const demo = await request.post("http://127.0.0.1:4099/__rad/otvori");
   expect(demo.ok()).toBe(true);
-  const { title, documentId } = await demo.json();
+  const { assignmentId, documentId } = await demo.json();
   let sesija = "demo-pristup";
   // WebKit does not send a Secure cookie to the HTTP test origin.
   await page.route("**/pristup/**", async (route) => {
@@ -11,8 +11,7 @@ test("student na 360 px otvara dnevnik sa stranice rada", async ({ page, request
     await route.fulfill({ response: await route.fetch({ headers }) });
   });
   await page.setViewportSize({ width: 360, height: 780 });
-  await page.goto("/");
-  await page.getByRole("link", { name: title, exact: true }).press("Enter");
+  await page.goto(`/rad/${assignmentId}`);
   await page.getByRole("link", { name: "Tko je vidio moj rad" }).press("Enter");
 
   await expect(page).toHaveURL(`/pristup/${documentId}`);
