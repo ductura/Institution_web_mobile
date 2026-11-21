@@ -93,6 +93,31 @@ export async function studentWorkRoute(req, res, path, json) {
     json(res, 200, { courses: [{ id: "d0040000-0000-4000-8000-000000000004", name: "Izmišljeni kolegij", assignments }] });
     return true;
   }
+  const accessLog = /^\/api\/v1\/student\/works\/([^/]+)\/access-log$/.exec(path);
+  if (accessLog && req.method === "GET") {
+    const cookie = req.headers.cookie;
+    if (cookie === "__Host-ductus_session=demo-zabranjeno") {
+      json(res, 403, { error: "forbidden" });
+    } else if (cookie !== "__Host-ductus_session=demo-pristup") {
+      json(res, 401, { error: "unauthorized" });
+    } else if (!works.has(accessLog[1])) {
+      json(res, 404, { error: "not_found" });
+    } else {
+      const id = "d0050000-0000-4000-8000-000000000005";
+      const at = "2026-11-19T23:35:00.000Z";
+      const query = new URL(req.url, "http://localhost").searchParams;
+      const continued = query.get("beforeAt") === at && query.get("beforeId") === id;
+      const entry = continued ? {
+        id: "d0060000-0000-4000-8000-000000000006", at: "2026-11-19T17:00:00.000Z",
+        role: "teacher", surface: "process_summary", reader: null,
+      } : {
+        id, at, role: "mentor", surface: "live_view",
+        reader: { givenName: "Izmišljena", familyName: "MentoricaIzDugogIzmišljenogNazivaSeminarskeGrupe".repeat(2) },
+      };
+      json(res, 200, { entries: [entry], next: continued ? null : { beforeAt: at, beforeId: id }, continued });
+    }
+    return true;
+  }
   const operations = {
     "/api/v1/evidence/open": "evidence.open.post",
     "/api/v1/evidence/commit": "evidence.commit.post",
