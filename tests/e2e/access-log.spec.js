@@ -29,11 +29,12 @@ test("student na 360 px otvara dnevnik sa stranice rada", async ({ page, request
   await page.getByRole("link", { name: "Prikaži najnovija otvaranja" }).press("Enter");
   await expect(page).toHaveURL(`/pristup/${documentId}`);
 
+  const upozorenje = page.getByRole("main").getByRole("alert");
   await page.goto("/pristup/demo-nepoznat");
-  await expect(page.getByRole("alert")).toHaveText("Rad nije pronađen");
+  await expect(upozorenje).toHaveText("Rad nije pronađen");
   sesija = "demo-zabranjeno";
   await page.goto(`/pristup/${documentId}`);
-  await expect(page.getByRole("alert")).toHaveText("Rad nije pronađen");
+  await expect(upozorenje).toHaveText("Rad nije pronađen");
 
   await page.unroute("**/pristup/**");
   await page.reload();
