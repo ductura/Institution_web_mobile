@@ -18,6 +18,34 @@ export const greska = (stanje) =>
   })[stanje]?.() ?? odgovor({ greska: "nedostupan" }, 502);
 
 /**
+ * Body as text, or null as soon as it passes `max` bytes. A declared
+ * Content-Length over the limit is refused before reading, and an undeclared
+ * or understated body stops being read the moment it crosses the limit.
+ * @param {Request} request
+ * @param {number} max
+ * @returns {Promise<string | null>}
+ */
+async function procitajDoGranice(request, max) {
+  if (Number(request.headers.get("content-length")) > max) return null;
+  if (!request.body) return "";
+  const citac = request.body.getReader();
+  const dijelovi = [];
+  let ukupno = 0;
+  for (;;) {
+    const { done, value } = await citac.read();
+    if (done) break;
+    ukupno += value.byteLength;
+    if (ukupno > max) {
+      await citac.cancel().catch(() => {});
+      return null;
+    }
+    dijelovi.push(value);
+  }
+  // TextDecoder, like Request.text(): drops a leading BOM, replaces invalid UTF-8.
+  return new TextDecoder().decode(Buffer.concat(dijelovi));
+}
+
+/**
  * Mutations come only from this app's own pages: JSON (so a cross-site form
  * cannot send one without a preflight) and, where the browser says so, from
  * the same origin.
@@ -29,8 +57,8 @@ export async function procitajMutaciju(request, maxBytes = MAX_TIJELO) {
   if (!/^application\/json\s*(;|$)/i.test(request.headers.get("content-type") ?? "")) {
     return { odbijeno: odgovor({ greska: "ocekuje_se_json" }, 415) };
   }
-  const tekst = await request.text();
-  if (Buffer.byteLength(tekst, "utf8") > maxBytes) return { odbijeno: odgovor({ greska: "prevelik_zahtjev" }, 413) };
+  const tekst = await procitajDoGranice(request, maxBytes);
+  if (tekst === null) return { odbijeno: odgovor({ greska: "prevelik_zahtjev" }, 413) };
   try {
     return { tijelo: JSON.parse(tekst) };
   } catch {

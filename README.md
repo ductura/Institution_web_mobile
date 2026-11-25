@@ -13,13 +13,32 @@ na adresi iz `INSTITUTION_SERVER_URL` (zadano http://127.0.0.1:4000), i prenose 
 | `GET /api/documents` | `GET /api/v1/documents` |
 | `GET /api/documents/:id` | `GET /api/v1/documents/:id` |
 | `PUT /api/documents/:id` | `PUT /api/v1/documents/:id` |
+| `POST /api/v1/evidence/open` | `POST /api/v1/evidence/open` (`evidence.open.post`) |
+| `POST /api/v1/evidence/commit` | `POST /api/v1/evidence/commit` (`evidence.commit.post`) |
+| `POST /api/v1/submission` | `POST /api/v1/submission` (`submission.submit.post`) |
+| `POST /api/prijavi-problem` | `POST /api/v1/support/problem-report` (`support.problem-report.post`) |
+
+Mutacije (`PUT` i `POST`) primaju samo JSON s iste adrese (`Sec-Fetch-Site`, a za `POST` i `Origin`),
+provjeravaju tijelo prema zajedničkom ugovoru (`@ductura/contracts`) i odbijaju preveliko tijelo s 413:
+prema najavljenom `Content-Length` bez čitanja, a bez njega čim tijelo prijeđe granicu.
+
+| BFF ruta | Najveće tijelo |
+| --- | --- |
+| `PUT /api/documents/:id` | 2 MiB |
+| `POST /api/v1/evidence/open` | 1024 B |
+| `POST /api/v1/evidence/commit` | 5 596 504 B |
+| `POST /api/v1/submission` | 1024 B |
+| `POST /api/prijavi-problem` | 8192 B |
 
 Bez sesije stranica nudi „Prijava preko AAI@EduHr” (`/api/v1/auth/login?returnTo=…`).
 
 | Stranica | Što radi |
 | --- | --- |
-| `/` | moji dokumenti |
+| `/` | moji zadaci i moji dokumenti |
 | `/doc/:id` | uređivanje i spremanje dokumenta; traka za spremanje ostaje iznad zaslonske tipkovnice |
+| `/rad/[assignmentId]` | pisanje i predaja studentskog rada za zadatak (`GET /api/v1/student/assignments`, zatim BFF rute za dokaze i predaju) |
+| `/pristup/[documentId]` | dnevnik pristupa studentovu radu (`GET /api/v1/student/works/:documentId/access-log`) |
+| `/prijavi-problem` | prijava problema podršci (`POST /api/prijavi-problem`) |
 
 Stare poveznice `/#/doc/:id` otvaraju `/doc/:id`.
 
