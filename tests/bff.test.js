@@ -133,16 +133,24 @@ const tok = (dijelovi) => {
   }, { highWaterMark: 0 });
   return { stream, stanje };
 };
+/** Streaming body needs `duplex`, which the DOM RequestInit type does not list yet. */
+const sTokomNa = (url, stream, zaglavlja) => {
+  /** @type {RequestInit & { duplex: 'half' }} */
+  const init = { method: 'POST', headers: zaglavlja, body: stream, duplex: 'half' };
+  return new Request(url, init);
+};
 const sTokom = (stream, zaglavlja = {}) =>
-  new Request('http://127.0.0.1:5174/api/x', {
-    method: 'POST', headers: { ...MUTACIJA, ...zaglavlja }, body: stream, duplex: 'half',
-  });
+  sTokomNa('http://127.0.0.1:5174/api/x', stream, { ...MUTACIJA, ...zaglavlja });
+/** @param {{tijelo: unknown} | {odbijeno: Response}} r */
+const odbijen = (r) => ('odbijeno' in r ? r.odbijeno : null);
+/** @param {{tijelo: unknown} | {odbijeno: Response}} r */
+const tijeloOd = (r) => ('tijelo' in r ? r.tijelo : undefined);
 
 test('preveliki Content-Length: 413 bez čitanja tijela', async () => {
   const { stream, stanje } = tok(['{}']);
   const r = await procitajMutaciju(sTokom(stream, { 'content-length': '101' }), 100);
-  assert.equal(r.odbijeno?.status, 413);
-  assert.deepEqual(await r.odbijeno.json(), { greska: 'prevelik_zahtjev' });
+  assert.equal(odbijen(r)?.status, 413);
+  assert.deepEqual(await odbijen(r)?.json(), { greska: 'prevelik_zahtjev' });
   assert.equal(stanje.procitano, 0);
 });
 
@@ -150,7 +158,7 @@ test('bez Content-Length: čitanje staje čim tijelo prijeđe ograničenje', asy
   const komad = 'x'.repeat(40);
   const { stream, stanje } = tok(['["', komad, komad, komad, komad, komad, '"]']);
   const r = await procitajMutaciju(sTokom(stream), 100);
-  assert.equal(r.odbijeno?.status, 413);
+  assert.equal(odbijen(r)?.status, 413);
   assert.ok(stanje.procitano < 7, `pročitano ${stanje.procitano} od 7 dijelova`);
   assert.equal(stanje.otkazano, true);
 });
@@ -158,7 +166,7 @@ test('bez Content-Length: čitanje staje čim tijelo prijeđe ograničenje', asy
 test('Content-Length koji umanjuje tijelo ne zaobilazi ograničenje', async () => {
   const { stream, stanje } = tok(['["', 'y'.repeat(200), '"]']);
   const r = await procitajMutaciju(sTokom(stream, { 'content-length': '10' }), 100);
-  assert.equal(r.odbijeno?.status, 413);
+  assert.equal(odbijen(r)?.status, 413);
   assert.equal(stanje.otkazano, true);
 });
 
@@ -169,19 +177,19 @@ test('tijelo točno do ograničenja prolazi, i UTF-8 znak razlomljen među dijel
     pull(c) { if (i < bajtovi.length) c.enqueue(bajtovi.slice(i, ++i)); else c.close(); },
   });
   const r = await procitajMutaciju(sTokom(stream), bajtovi.length);
-  assert.deepEqual(r.tijelo, { t: 'čć' });
+  assert.deepEqual(tijeloOd(r), { t: 'čć' });
   const malo = await procitajMutaciju(new Request('http://127.0.0.1:5174/api/x', {
     method: 'POST', headers: MUTACIJA, body: '\uFEFF{"a":1}',
   }), 100);
-  assert.deepEqual(malo.tijelo, { a: 1 }, 'BOM se uklanja kao u Request.text()');
+  assert.deepEqual(tijeloOd(malo), { a: 1 }, 'BOM se uklanja kao u Request.text()');
   const prazno = await procitajMutaciju(new Request('http://127.0.0.1:5174/api/x', { method: 'POST', headers: MUTACIJA }));
-  assert.equal(prazno.odbijeno?.status, 400);
+  assert.equal(odbijen(prazno)?.status, 400);
 });
 
 test('neispravan Content-Length ne odbija sam po sebi; ograničenje i dalje vrijedi', async () => {
   const { stream } = tok(['{"a":', '2}']);
   const r = await procitajMutaciju(sTokom(stream, { 'content-length': 'abc' }), 100);
-  assert.deepEqual(r.tijelo, { a: 2 });
+  assert.deepEqual(tijeloOd(r), { a: 2 });
 });
 
 test('preveliko tijelo na ruti predaje: 413 i ništa ne ide na poslužitelj', async () => {
@@ -190,10 +198,8 @@ test('preveliko tijelo na ruti predaje: 413 i ništa ne ide na poslužitelj', as
   const res = await rad(zahtjev('/v1/submission', init), ctx);
   assert.equal(res.status, 413);
   const { stream, stanje } = tok(['{"documentId":"', 'd'.repeat(600), 'd'.repeat(600), '"}']);
-  const res2 = await rad(new Request('http://127.0.0.1:5174/api/v1/submission', {
-    method: 'POST', duplex: 'half', body: stream,
-    headers: { ...MUTACIJA, origin: 'http://127.0.0.1:5174', cookie: KOLACIC },
-  }), ctx);
+  const res2 = await rad(sTokomNa('http://127.0.0.1:5174/api/v1/submission', stream,
+    { ...MUTACIJA, origin: 'http://127.0.0.1:5174', cookie: KOLACIC }), ctx);
   assert.equal(res2.status, 413);
   assert.equal(stanje.otkazano, true);
   assert.equal(pozivi.length, 0);
