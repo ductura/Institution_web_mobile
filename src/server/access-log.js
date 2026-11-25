@@ -1,6 +1,6 @@
 import { createClient } from "@ductura/contracts";
 import { pozoviServer } from "./institution-server.js";
-import { UUID } from "./student-work.js";
+import { NEPOZVANI_BAZNI_URL, UUID } from "./student-work.js";
 
 /** @typedef {import("@ductura/contracts").Operations["student.access-log.get"]["success"]["body"]} AccessLog */
 
@@ -40,7 +40,7 @@ export async function dohvatiDnevnikPristupa(documentId, kolacic, prije) {
       documentId.trim() !== documentId || /[\p{Cc}]/u.test(documentId) || documentId === "." || documentId === "..") {
     return { status: 404 };
   }
-  const client = createClient("http://institution.invalid", async (url) => {
+  const client = createClient(NEPOZVANI_BAZNI_URL, async (url) => {
     const { pathname, search } = new URL(String(url));
     const odgovor = await pozoviServer(pathname.slice("/api/v1".length) + search, { kolacic });
     return odgovor?.ok ? odgovor : new Response(null, { status: odgovor?.status ?? 503 });
